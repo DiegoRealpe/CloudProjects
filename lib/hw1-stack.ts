@@ -19,7 +19,7 @@ export class Hw1Stack extends cdk.Stack {
     const keyNameParam = this.node.tryGetContext('keyNameParam')
     const instanceTypeParam = this.node.tryGetContext('instanceTypeParam')
     const imageIDParam = this.node.tryGetContext('imageIDParam')
-    const securityGroupIDParam = this.node.tryGetContext('securityGroupIDParam')
+    const securityGroupNameParam = this.node.tryGetContext('securityGroupNameParam')
     // Extracts file name from path context param
     const filePath = path.resolve(filePathParam)
     const directoryName = path.dirname(filePath)
@@ -60,7 +60,7 @@ export class Hw1Stack extends cdk.Stack {
     // Get Security Group from passed ID or use create one if not found
     let givenSecurityGroup: ec2.ISecurityGroup;
     try {
-      givenSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, 'givenSecurityGroup', securityGroupIDParam)
+      givenSecurityGroup = ec2.SecurityGroup.fromLookupByName(this, 'givenSecurityGroup', securityGroupNameParam, vpc)
     } catch (error) {
       givenSecurityGroup = new ec2.SecurityGroup(
         this,

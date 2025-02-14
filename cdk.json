@@ -18,11 +18,11 @@
   },
   "context": {
     "bucketNameParam": "staticwebbucket-cpre559",
-    "filePathParam": "/home/muzan/CprE_559/HW1/assets/index.html",
+    "filePathParam": "",
     "keyNameParam": "ec2_login_key",
     "instanceTypeParam": "t2.micro",
     "imageIDParam": "ami-0cb91c7de36eed2cb",
-    "securityGroupIDParam": "sg-f3723fbb",
+    "securityGroupNameParam": "",
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
