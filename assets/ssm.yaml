@@ -1,0 +1,34 @@
+name: SSM Component
+description: Install SSM
+schemaVersion: 1.0
+phases:
+  - name: build
+    steps:
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'Start of the build phase.'
+      - name: InstallSSMAgent
+        action: ExecuteBash
+        inputs:
+          commands:
+            - sudo yum install -y amazon-ssm-agent || sudo apt-get install -y
+              amazon-ssm-agent
+            - sudo systemctl enable amazon-ssm-agent
+            - sudo systemctl start amazon-ssm-agent
+            - echo 'SSM agent installed'
+  - name: validate
+    steps:
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'Start of the the validate phase.'
+  - name: test
+    steps:
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'Start of the test phase.'

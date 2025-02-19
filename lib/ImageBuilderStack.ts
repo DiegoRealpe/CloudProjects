@@ -2,6 +2,7 @@ import { Construct } from 'constructs';
 import path = require('path');
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3Deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as imagebuilder from 'aws-cdk-lib/aws-imagebuilder';
@@ -16,6 +17,7 @@ export interface ImageBuilderStackProps extends cdk.StackProps {
 export class ImageBuilderStack extends cdk.Stack {
 	public props: ImageBuilderStackProps
 	public bucket: s3.IBucket;
+	// public bucketDeploy: s3Deploy.BucketDeployment;
 	public ec2InstanceProfile: iam.InstanceProfile;
 	public ec2EncryptionKey: kms.Key;
 	public imagePipeline: imagebuilder.CfnImagePipeline;
@@ -29,21 +31,22 @@ export class ImageBuilderStack extends cdk.Stack {
 		this.props = props
 
 		const shouldUseAMIEncryption = (this.node.tryGetContext('shouldUseAMIEncryption') as boolean) ?? true;
-		this.bucket = this.createS3Bucket();
 		this.ec2InstanceProfile = this.createInstanceProfileRole();
+		this.bucket = this.createS3Bucket();
+		this.bucket.node.addDependency(this.ec2InstanceProfile)
 		if (shouldUseAMIEncryption) {
 			this.ec2EncryptionKey = this.createKMSKey();
 		}
 		this.distributionConfig = this.createDistribution();
 		this.imageRecipe = this.buildRecipe();
 		this.infraConfig = this.createInfra();
-		// this.infra.addDependsOn(this.instanceProfileRole);
 		this.imagePipeline = this.createImagePipeline();
 		// this.pipeline.addDependsOn(this.infra);
 	}
 
 	private createInstanceProfileRole(): iam.InstanceProfile {
 		const givenEC2RoleName = this.node.tryGetContext('givenEC2RoleName') ?? 'default-java-ec2';
+		const givenBucketName = this.node.tryGetContext('givenBucketName')
 		const ec2ServiceRole = new iam.Role(this, `${givenEC2RoleName}-role`, {
 			roleName: givenEC2RoleName,
 			description: 'Service role to run an EC2 simple java server',
@@ -63,7 +66,7 @@ export class ImageBuilderStack extends cdk.Stack {
 						}),
 						new iam.PolicyStatement({
 							actions: ['s3:Get*', 's3:Delete*', 's3:Create*', 's3:Update*', 's3:List*', 's3:Put*'],
-							resources: [`arn:aws:s3:::${this.bucket.bucketName}`, `arn:aws:s3:::${this.bucket.bucketName}/*`],
+							resources: [`arn:aws:s3:::${givenBucketName}`, `arn:aws:s3:::${givenBucketName}/*`],
 						}),
 					],
 				}),
@@ -90,8 +93,16 @@ export class ImageBuilderStack extends cdk.Stack {
 			assignedBucket.addToResourcePolicy(
 				new iam.PolicyStatement({
 					actions: ['s3:Get*', 's3:Put*', 's3:List*'],
-					resources: [`arn:aws:s3:::${assignedBucket.bucketName}`, `arn:aws:s3:::${assignedBucket.bucketName}/*`],
-					principals: [new iam.AccountRootPrincipal()],
+					resources: [
+						`arn:aws:s3:::${assignedBucket.bucketName}`, 
+						`arn:aws:s3:::${assignedBucket.bucketName}/*`
+					],
+					principals: [
+						new iam.AccountRootPrincipal(), 
+						new iam.ServicePrincipal('ec2.amazonaws.com'), 
+						new iam.ServicePrincipal('imagebuilder.amazonaws.com'),
+						// new iam.ArnPrincipal(this.ec2InstanceProfile.role?.roleArn!)
+					],
 				}),
 			);
 		} else {
@@ -101,6 +112,17 @@ export class ImageBuilderStack extends cdk.Stack {
 			console.log('Bucket exists');
 			assignedBucket = s3.Bucket.fromBucketName(this, 'amibucket-cpre599', givenBucketName.bucketName) as s3.Bucket;
 		}
+
+		// this.bucketDeploy = new s3Deploy.BucketDeployment(this, 'DeployWebsite', {
+		// 	sources: [
+		// 		s3Deploy.Source.asset('./assets/', {
+		// 			readers: [new iam.AnyPrincipal()],
+		// 			exclude: ['**', `!ssm.yaml`],
+		// 		}),
+		// 	],
+		// 	destinationBucket: assignedBucket,
+		// });
+
 		return assignedBucket;
 	}
 
@@ -202,7 +224,8 @@ export class ImageBuilderStack extends cdk.Stack {
 					{
 						region: cdk.Aws.REGION,
 						amiDistributionConfiguration: {
-							targetAccountIds: [cdk.Aws.ACCOUNT_ID],
+							name: 'customAMI-{{ imagebuilder:buildDate }}',
+							description: 'My distributed AMI',
 						},
 					},
 				],
@@ -229,19 +252,38 @@ export class ImageBuilderStack extends cdk.Stack {
 			data: `
 name: SSM Component
 description: Install SSM
-schemaVersion: 1
+schemaVersion: 1.0
 phases:
   - name: build
     steps:
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'Start of the build phase.'
       - name: InstallSSMAgent
         action: ExecuteBash
-        inputs: null
-        commands:
-          - echo running
-          - sudo yum install -y amazon-ssm-agent || sudo apt-get install -y
-            amazon-ssm-agent
-          - sudo systemctl enable amazon-ssm-agent
-          - sudo systemctl start amazon-ssm-agent
+        inputs:
+          commands:
+            - sudo yum install -y amazon-ssm-agent || sudo apt-get install -y
+              amazon-ssm-agent
+            - sudo systemctl enable amazon-ssm-agent
+            - sudo systemctl start amazon-ssm-agent
+            - echo 'SSM agent installed'
+  - name: validate
+    steps:
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'Start of the the validate phase.'
+  - name: test
+    steps:
+      - name: HelloWorldStep
+        action: ExecuteBash
+        inputs:
+          commands:
+            - echo 'Start of the test phase.'
 `})
 
 		const componentArnList = [
@@ -272,7 +314,7 @@ phases:
 						deleteOnTermination: shouldDeleteOnTermination,
 						encrypted: shouldUseAMIEncryption,
 						kmsKeyId: shouldUseAMIEncryption ? this.ec2EncryptionKey?.keyId : undefined,
-						volumeSize: 100,
+						volumeSize: 20,
 						volumeType: 'gp3',
 					},
 				},
