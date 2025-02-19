@@ -5,9 +5,9 @@ Hello! If you are reading this you are probably a Teaching Assistant and I have 
 <details>
   <summary><b>Why not just use the AWS Java SDK like the other students?</b></summary>
 
-Writing code to create AWS resources in the SDK can be very tedious as you have to manually read and specify all the configuration options to use for each resource. If there are failures in the configuration of resources, the program may stop in the middle of deployment and you are forced to rely on the web console to roll back. 
+Writing code to create AWS resources in the SDK can be very tedious as you have to manually read and specify all the configuration options to use for each resource. If there are failures in the configuration of resources, the program may stop in the middle of deployment and you are forced to rely on the web console to roll back.
 
-In contrast, the CDK library uses *Cloudformation* in the background. When a CDK app is ran with the command `cdk deploy`, it outputs a template that tells AWS exactly how to create the cloud resources and if there are config errors, it will tell you at compilation time instead of mid deployment and in case of failures in deployment, changes can easily be rolled back running `cdk destroy`
+In contrast, the CDK library uses _Cloudformation_ in the background. When a CDK app is ran with the command `cdk deploy`, it outputs a template that tells AWS exactly how to create the cloud resources and if there are config errors, it will tell you at compilation time instead of mid deployment and in case of failures in deployment, changes can easily be rolled back running `cdk destroy`
 
 </details>
 
@@ -23,15 +23,15 @@ Since I have not heard back from either of the TAs and I do not know about your 
 1. Open **PowerShell** as Administrator
 2. Install the Windows Package Manager **Chocolatey** by running
 
-    ```powershell
-    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    ```
+   ```powershell
+   Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+   ```
 
-3. Install Node.js Long Term Support version using Chocolatey 
+3. Install Node.js Long Term Support version using Chocolatey
 
-    ```powershell
-    choco install nodejs-lts
-    ```
+   ```powershell
+   choco install nodejs-lts
+   ```
 
 </details>
 
@@ -40,21 +40,21 @@ Since I have not heard back from either of the TAs and I do not know about your 
 
 1. Update apt and install curl
 
-    ```bash
-    sudo apt update && sudo apt upgrade && sudo apt install curl -y
-    ```
+   ```bash
+   sudo apt update && sudo apt upgrade && sudo apt install curl -y
+   ```
 
 2. Install NodeSource PPA
 
-    ```bash
-    curl -sL https://deb.nodesource.com/setup_lts.x -o /tmp/nodesource_setup.sh
-    ```
+   ```bash
+   curl -sL https://deb.nodesource.com/setup_lts.x -o /tmp/nodesource_setup.sh
+   ```
 
 3. Install Node.js
 
-    ```bash
-    sudo apt install nodejs
-    ```
+   ```bash
+   sudo apt install nodejs
+   ```
 
 </details>
 
@@ -80,7 +80,7 @@ export AWS_REGION="us-east-2"
 
 ## Run "Cloud Projects" CDK App
 
-Once CDK is installed, clone the repo and cd into it. 
+Once CDK is installed, clone the repo and cd into it.
 
 > **Important:** before running the commands below you have to "bootstrap" your AWS account by running `cdk bootstrap`. Bootstrapping CDK will create an S3 bucket to store Cloudformation metadata (which keeps track of the state of resources)
 
@@ -91,6 +91,7 @@ Once CDK is installed, clone the repo and cd into it.
 ### Run app with your own custom parameters
 
 Often tools like SDK or the CLI will take in parameters using hardcoded string variables inside the code which are then used for the AWS API calls. For example, as part of the requirements of the first assignment, we are asked to pass:
+
 - SSH keys
 - Security group ID
 - AMI ID
@@ -113,7 +114,6 @@ In this project I combined parts 1 & 3 so when the program is ran, it accepts a 
 ## Troubleshooting Permissions
 
 I am running this project using an IAM role with Admin priviledges so the deployment had no problems creating all these resources though cloudformation. However, if you are not using a role/user with admin priviledges, these are the permissions you are going to need to run my project:
-
 
 <details>
   <summary>IAM Least Permissions for CDK</summary>
@@ -158,10 +158,7 @@ I am running this project using an IAM role with Admin priviledges so the deploy
 				"iam:PutRolePolicy",
 				"iam:TagRole"
 			],
-			"Resource": [
-				"arn:aws:iam::*:policy/*",
-				"arn:aws:iam::*:role/cdk-*"
-			]
+			"Resource": ["arn:aws:iam::*:policy/*", "arn:aws:iam::*:role/cdk-*"]
 		},
 		{
 			"Effect": "Allow",
@@ -175,9 +172,7 @@ I am running this project using an IAM role with Admin priviledges so the deploy
 				"s3:PutEncryptionConfiguration",
 				"s3:PutLifecycleConfiguration"
 			],
-			"Resource": [
-				"arn:aws:s3:::cdk-*"
-			]
+			"Resource": ["arn:aws:s3:::cdk-*"]
 		},
 		{
 			"Effect": "Allow",
@@ -187,9 +182,7 @@ I am running this project using an IAM role with Admin priviledges so the deploy
 				"ssm:GetParameters",
 				"ssm:PutParameter"
 			],
-			"Resource": [
-				"arn:aws:ssm:*:*:parameter/cdk-bootstrap/*"
-			]
+			"Resource": ["arn:aws:ssm:*:*:parameter/cdk-bootstrap/*"]
 		},
 		{
 			"Effect": "Allow",
@@ -200,9 +193,7 @@ I am running this project using an IAM role with Admin priviledges so the deploy
 				"ecr:SetRepositoryPolicy",
 				"ecr:PutLifecyclePolicy"
 			],
-			"Resource": [
-				"arn:aws:ecr:*:*:repository/cdk-*"
-			]
+			"Resource": ["arn:aws:ecr:*:*:repository/cdk-*"]
 		}
 	]
 }
