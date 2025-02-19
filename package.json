@@ -1,8 +1,8 @@
 {
-	"name": "hw1",
+	"name": "cloudprojects",
 	"version": "0.1.0",
 	"bin": {
-		"hw1": "bin/hw1.js"
+		"CloudProjects": "bin/CloudProjects.js"
 	},
 	"scripts": {
 		"build": "tsc",

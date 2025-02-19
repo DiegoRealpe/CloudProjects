@@ -1,5 +1,5 @@
 {
-	"app": "npx ts-node --prefer-ts-exts bin/hw1.ts",
+	"app": "npx ts-node --prefer-ts-exts bin/CloudProjects.ts",
 	"watch": {
 		"include": ["**"],
 		"exclude": [
@@ -15,12 +15,22 @@
 		]
 	},
 	"context": {
-		"bucketNameParam": "staticwebbucket-cpre559",
-		"filePathParam": "",
 		"keyNameParam": "ec2_login_key",
-		"instanceTypeParam": "t2.micro",
-		"imageIDParam": "ami-0cb91c7de36eed2cb",
-		"securityGroupNameParam": "",
+
+		"shouldUseAMIEncryption": "true",
+		"shouldDeleteOnTermination": "true",
+		"shouldCreateBucket": "true",
+		
+		"givenInstanceType": "t2.micro",
+		"givenBaseImage": "ami-0cb91c7de36eed2cb",
+		"givenImageRecipeName": "javaImageRecipe",
+		
+		"givenBucketName": "amibucket-cpre599",
+		"givenEC2RoleName": "default-java-ec2",
+		"givenImagePipelineName": "ec2ImagePipeline",
+		"givenInfraConfigName": "defaultInfraConfigName",
+		"givenDistroConfigName": "javaLinuxDistroConfig",
+		
 		"@aws-cdk/aws-lambda:recognizeLayerVersion": true,
 		"@aws-cdk/core:checkSecretUsage": true,
 		"@aws-cdk/core:target-partitions": ["aws", "aws-cn"],
