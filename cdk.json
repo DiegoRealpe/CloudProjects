@@ -22,7 +22,7 @@
 		"shouldCreateBucket": "true",
 		
 		"givenInstanceType": "t2.micro",
-		"givenBaseImage": "ami-0cb91c7de36eed2cb",
+		"givenBaseImage": "arn:aws:imagebuilder:us-east-2:aws:image/amazon-linux-2023-x86/x.x.x",
 		"givenImageRecipeName": "javaImageRecipe",
 		
 		"givenBucketName": "amibucket-cpre599",

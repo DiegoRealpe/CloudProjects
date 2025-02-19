@@ -1,4 +1,5 @@
 import { Construct } from 'constructs';
+import * as fs from 'fs';
 import path = require('path');
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -238,8 +239,18 @@ export class ImageBuilderStack extends cdk.Stack {
 		}
 	}
 
+	private getFileString(filePath: string): string | undefined {
+		try {
+			const content = fs.readFileSync(filePath, 'utf-8');
+			return content;
+		} catch (error) {
+			console.error(`Error reading file "${filePath}":`, error);
+			return undefined;
+		}
+	}
+
 	private buildRecipe(): imagebuilder.CfnImageRecipe {
-		const givenBaseImage = this.node.tryGetContext('givenBaseImage') ?? `TODO`;
+		const givenBaseImage = this.node.tryGetContext('givenBaseImage') ?? `arn:aws:imagebuilder:us-east-2:aws:image/amazon-linux-2023-x86/x.x.x`;
 		const givenImageRecipeName = this.node.tryGetContext('givenImageRecipeName') ?? `javaImageRecipe`;
 		const shouldDeleteOnTermination = this.node.tryGetContext('shouldDeleteOnTermination') === 'true' ? true : false;
 		const shouldUseAMIEncryption = this.node.tryGetContext('shouldUseAMIEncryption') === 'true' ? true : false;
@@ -249,43 +260,8 @@ export class ImageBuilderStack extends cdk.Stack {
 			platform: 'Linux',
 			version: '1.0.0',
 			description: 'Installs the AWS Systems Manager Agent (SSM Agent).',
-			data: `
-name: SSM Component
-description: Install SSM
-schemaVersion: 1.0
-phases:
-  - name: build
-    steps:
-      - name: HelloWorldStep
-        action: ExecuteBash
-        inputs:
-          commands:
-            - echo 'Start of the build phase.'
-      - name: InstallSSMAgent
-        action: ExecuteBash
-        inputs:
-          commands:
-            - sudo yum install -y amazon-ssm-agent || sudo apt-get install -y
-              amazon-ssm-agent
-            - sudo systemctl enable amazon-ssm-agent
-            - sudo systemctl start amazon-ssm-agent
-            - echo 'SSM agent installed'
-  - name: validate
-    steps:
-      - name: HelloWorldStep
-        action: ExecuteBash
-        inputs:
-          commands:
-            - echo 'Start of the the validate phase.'
-  - name: test
-    steps:
-      - name: HelloWorldStep
-        action: ExecuteBash
-        inputs:
-          commands:
-            - echo 'Start of the test phase.'
-`})
-
+			data: this.getFileString('./assets/ssm.yaml')
+		})
 		const componentArnList = [
 			{
 				name: 'amazon-corretto-17-jdk',
@@ -306,6 +282,11 @@ phases:
 			version: '1.0.0',
 			// Injects image layers here
 			components: componentArnList,
+			additionalInstanceConfiguration: {
+				systemsManagerAgent: {
+					uninstallAfterBuild: true
+				}
+			},
 			parentImage: givenBaseImage,
 			blockDeviceMappings: [
 				{
