@@ -227,20 +227,21 @@ export class ImageBuilderStack extends cdk.Stack {
 			version: '1.0.0',
 			description: 'Installs the AWS Systems Manager Agent (SSM Agent).',
 			data: `
-name: 'SSM Component'
-description: 'Install SSM'
-schemaVersion: 1.0
+name: SSM Component
+description: Install SSM
+schemaVersion: 1
 phases:
- - name: build
- steps:
-  - name: InstallSSMAgent
-  action: ExecuteBash
-  inputs:
-   commands:
-   - echo running
-   - sudo yum install -y amazon-ssm-agent || sudo apt-get install -y amazon-ssm-agent
-   - sudo systemctl enable amazon-ssm-agent
-   - sudo systemctl start amazon-ssm-agent
+  - name: build
+    steps:
+      - name: InstallSSMAgent
+        action: ExecuteBash
+        inputs: null
+        commands:
+          - echo running
+          - sudo yum install -y amazon-ssm-agent || sudo apt-get install -y
+            amazon-ssm-agent
+          - sudo systemctl enable amazon-ssm-agent
+          - sudo systemctl start amazon-ssm-agent
 `})
 
 		const componentArnList = [
