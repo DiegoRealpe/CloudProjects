@@ -26,6 +26,7 @@ export class ImageBuilderStack extends cdk.Stack {
 	public infraConfig: imagebuilder.CfnInfrastructureConfiguration;
 	public componentList: imagebuilder.CfnImageRecipe.ComponentConfigurationProperty;
 	public distributionConfig: imagebuilder.CfnDistributionConfiguration;
+	public ec2ServiceRole: iam.Role;
 
 	constructor(scope: Construct, id: string, props: ImageBuilderStackProps) {
 		super(scope, id, props);
@@ -48,14 +49,15 @@ export class ImageBuilderStack extends cdk.Stack {
 	private createInstanceProfileRole(): iam.InstanceProfile {
 		const givenEC2RoleName = this.node.tryGetContext('givenEC2RoleName') ?? 'default-java-ec2';
 		const givenBucketName = this.node.tryGetContext('givenBucketName')
-		const ec2ServiceRole = new iam.Role(this, `${givenEC2RoleName}-role`, {
+		this.ec2ServiceRole = new iam.Role(this, `${givenEC2RoleName}-role`, {
 			roleName: givenEC2RoleName,
 			description: 'Service role to run an EC2 simple java server',
 			assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
-			managedPolicies: [
-				iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+			managedPolicies: [ 
+				// iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
 				iam.ManagedPolicy.fromAwsManagedPolicyName('EC2InstanceProfileForImageBuilder'),
-				iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryReadOnly'),
+				// iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2RoleforSSM'),
+				iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMFullAccess'),
 				iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonInspectorFullAccess'),
 			],
 			inlinePolicies: {
@@ -68,15 +70,23 @@ export class ImageBuilderStack extends cdk.Stack {
 						new iam.PolicyStatement({
 							actions: ['s3:Get*', 's3:Delete*', 's3:Create*', 's3:Update*', 's3:List*', 's3:Put*'],
 							resources: [`arn:aws:s3:::${givenBucketName}`, `arn:aws:s3:::${givenBucketName}/*`],
-						}),
+						})
 					],
 				}),
 			},
 		});
+		this.ec2ServiceRole.assumeRolePolicy?.addStatements(
+			new iam.PolicyStatement({
+				principals: [
+					new iam.ServicePrincipal('imagebuilder.amazonaws.com')
+				],
+				actions: ['sts:AssumeRole'],
+			})
+		)
 
 		return new iam.InstanceProfile(this, `${givenEC2RoleName}-ip`, {
 			instanceProfileName: `${givenEC2RoleName}-ip`,
-			role: ec2ServiceRole,
+			role: this.ec2ServiceRole,
 		});
 	}
 
@@ -258,7 +268,7 @@ export class ImageBuilderStack extends cdk.Stack {
 		const ssmComponent = new imagebuilder.CfnComponent(this, 'SSMAgentComponent', {
 			name: 'InstallSSMAgent',
 			platform: 'Linux',
-			version: '1.0.0',
+			version: '3.0.0',
 			description: 'Installs the AWS Systems Manager Agent (SSM Agent).',
 			data: this.getFileString('./assets/ssm.yaml')
 		})
@@ -279,13 +289,14 @@ export class ImageBuilderStack extends cdk.Stack {
 
 		const recipe = new imagebuilder.CfnImageRecipe(this, 'javaImageRecipe', {
 			name: givenImageRecipeName,
-			version: '1.0.0',
+			version: '3.0.1',
 			// Injects image layers here
 			components: componentArnList,
 			additionalInstanceConfiguration: {
 				systemsManagerAgent: {
 					uninstallAfterBuild: true
-				}
+				},
+				userDataOverride: this.getFileString('./assets/userData.sh')
 			},
 			parentImage: givenBaseImage,
 			blockDeviceMappings: [
