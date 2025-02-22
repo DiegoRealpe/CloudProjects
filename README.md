@@ -120,82 +120,57 @@ I am running this project using an IAM role with Admin priviledges so the deploy
 
 ```json
 {
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Action": "sts:AssumeRole",
-			"Resource": [
-				"arn:aws:iam::844062109895:role/cdk-*-file-publishing-role-*",
-				"arn:aws:iam::844062109895:role/cdk-*-lookup-role-*",
-				"arn:aws:iam::844062109895:role/cdk-*-deploy-role-*"
-			]
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"cloudformation:CreateChangeSet",
-				"cloudformation:DeleteChangeSet",
-				"cloudformation:DeleteStack",
-				"cloudformation:DescribeChangeSet",
-				"cloudformation:DescribeStackEvents",
-				"cloudformation:DescribeStacks",
-				"cloudformation:ExecuteChangeSet",
-				"cloudformation:GetTemplate"
-			],
-			"Resource": "arn:aws:cloudformation:*:*:stack/CDKToolkit/*"
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"iam:CreateRole",
-				"iam:DeleteRole",
-				"iam:GetRole",
-				"iam:GetRolePolicy",
-				"iam:AttachRolePolicy",
-				"iam:DetachRolePolicy",
-				"iam:DeleteRolePolicy",
-				"iam:PutRolePolicy",
-				"iam:TagRole"
-			],
-			"Resource": ["arn:aws:iam::*:policy/*", "arn:aws:iam::*:role/cdk-*"]
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"s3:CreateBucket",
-				"s3:DeleteBucket",
-				"s3:PutBucketPolicy",
-				"s3:DeleteBucketPolicy",
-				"s3:PutBucketPublicAccessBlock",
-				"s3:PutBucketVersioning",
-				"s3:PutEncryptionConfiguration",
-				"s3:PutLifecycleConfiguration"
-			],
-			"Resource": ["arn:aws:s3:::cdk-*"]
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"ssm:DeleteParameter",
-				"ssm:GetParameter",
-				"ssm:GetParameters",
-				"ssm:PutParameter"
-			],
-			"Resource": ["arn:aws:ssm:*:*:parameter/cdk-bootstrap/*"]
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"ecr:CreateRepository",
-				"ecr:DeleteRepository",
-				"ecr:DescribeRepositories",
-				"ecr:SetRepositoryPolicy",
-				"ecr:PutLifecyclePolicy"
-			],
-			"Resource": ["arn:aws:ecr:*:*:repository/cdk-*"]
-		}
-	]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": ["arn:aws:iam::844062109895:role/cdk-*-file-publishing-role-*", "arn:aws:iam::844062109895:role/cdk-*-lookup-role-*", "arn:aws:iam::844062109895:role/cdk-*-deploy-role-*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeChangeSet",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:DescribeStacks",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:GetTemplate"
+      ],
+      "Resource": "arn:aws:cloudformation:*:*:stack/CDKToolkit/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:GetRolePolicy", "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:DeleteRolePolicy", "iam:PutRolePolicy", "iam:TagRole"],
+      "Resource": ["arn:aws:iam::*:policy/*", "arn:aws:iam::*:role/cdk-*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:PutBucketPolicy",
+        "s3:DeleteBucketPolicy",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketVersioning",
+        "s3:PutEncryptionConfiguration",
+        "s3:PutLifecycleConfiguration"
+      ],
+      "Resource": ["arn:aws:s3:::cdk-*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ssm:DeleteParameter", "ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter"],
+      "Resource": ["arn:aws:ssm:*:*:parameter/cdk-bootstrap/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["ecr:CreateRepository", "ecr:DeleteRepository", "ecr:DescribeRepositories", "ecr:SetRepositoryPolicy", "ecr:PutLifecyclePolicy"],
+      "Resource": ["arn:aws:ecr:*:*:repository/cdk-*"]
+    }
+  ]
 }
 ```
 

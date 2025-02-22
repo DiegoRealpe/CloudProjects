@@ -15,20 +15,16 @@ export class ImageBuilderTriggerStack extends cdk.Stack {
     // 🔥 Step 2: IAM Role for Lambda (Allows triggering Image Builder and getting AMI details)
     const lambdaRole = new iam.Role(this, 'LambdaExecutionRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
-      ]
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
     });
 
     // 🔥 Step 3: Add Inline Policies for Image Builder Actions
-    lambdaRole.addToPolicy(new iam.PolicyStatement({
-      actions: [
-        'imagebuilder:StartImagePipelineExecution',
-        'imagebuilder:GetImage',
-        'imagebuilder:ListImagePipelineImages'
-      ],
-      resources: [imagePipelineArn]
-    }));
+    lambdaRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['imagebuilder:StartImagePipelineExecution', 'imagebuilder:GetImage', 'imagebuilder:ListImagePipelineImages'],
+        resources: [imagePipelineArn],
+      }),
+    );
 
     // 🔥 Step 4: Create the Lambda Function to Trigger Image Builder
     const triggerLambda = new lambda.Function(this, 'TriggerImageBuilderLambda', {
@@ -36,7 +32,7 @@ export class ImageBuilderTriggerStack extends cdk.Stack {
       handler: 'triggerImagePipeline.handler', // Must match the file and function name
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')), // Load from local directory
       timeout: cdk.Duration.minutes(10), // Allow up to 10 minutes
-      role: lambdaRole
+      role: lambdaRole,
     });
 
     // 🔥 Step 5: Create Custom Resource to Invoke Lambda During Deployment
@@ -46,17 +42,17 @@ export class ImageBuilderTriggerStack extends cdk.Stack {
         action: 'invoke',
         parameters: {
           FunctionName: triggerLambda.functionName,
-          Payload: JSON.stringify({ ImagePipelineArn: imagePipelineArn })
+          Payload: JSON.stringify({ ImagePipelineArn: imagePipelineArn }),
         },
-        physicalResourceId: customResources.PhysicalResourceId.of('ImageBuilderTrigger')
+        physicalResourceId: customResources.PhysicalResourceId.of('ImageBuilderTrigger'),
       },
-      policy: customResources.AwsCustomResourcePolicy.fromSdkCalls({ resources: [triggerLambda.functionArn] })
+      policy: customResources.AwsCustomResourcePolicy.fromSdkCalls({ resources: [triggerLambda.functionArn] }),
     });
 
     // 🔥 Step 6: Output the AMI ARN
     new cdk.CfnOutput(this, 'AmiArnOutput', {
       value: customResource.getResponseField('Data.AmiArn'),
-      description: 'The ARN of the generated AMI'
+      description: 'The ARN of the generated AMI',
     });
   }
 }
