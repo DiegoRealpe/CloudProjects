@@ -68,7 +68,7 @@ export class BasicASGStack extends cdk.Stack {
     });
   
     // Attach ASG to the Target Group (Ensures new instances register automatically)
-    asg.attachToApplicationTargetGroup(targetGroup);
+    // asg.attachToApplicationTargetGroup(targetGroup);
 
     // Output the ALB Public URL
     new cdk.CfnOutput(this, 'ALBAddress', {
