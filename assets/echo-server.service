@@ -1,0 +1,15 @@
+[Unit]
+Description=Java Echo Server
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user
+ExecStart=/usr/bin/java EchoServer
+Restart=always
+StandardOutput=append:/var/log/echo-server.log
+StandardError=append:/var/log/echo-server-error.log
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

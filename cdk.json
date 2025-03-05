@@ -11,15 +11,10 @@
     "shouldDeleteOnTermination": "true",
     "shouldCreateBucket": "true",
 
-    "givenInstanceType": "t2.micro",
-    "givenBaseImage": "arn:aws:imagebuilder:us-east-2:aws:image/amazon-linux-2023-x86/x.x.x",
-    "givenImageRecipeName": "javaImageRecipe",
-
-    "givenBucketName": "amibucket-cpre599",
-    "givenEC2RoleName": "default-java-ec2",
-    "givenImagePipelineName": "ec2ImagePipeline",
-    "givenInfraConfigName": "defaultInfraConfigName",
-    "givenDistroConfigName": "javaLinuxDistroConfig",
+    "givenInstanceType": "t3.micro",
+    "givenBaseImage": "ami-0e7b3e7766d24a6ff",
+    "givenBucketName": "gpbucket-cpre599",
+    "givenEC2RoleName": "default-java-ec2-role",
 
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
