@@ -5,11 +5,9 @@ import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as s3Deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as cdk from 'aws-cdk-lib';
-import { threadId } from 'worker_threads';
 
 export interface EC2StackProps extends cdk.StackProps {
   securityGroup: ec2.ISecurityGroup;
@@ -29,19 +27,15 @@ export class BasicEC2Stack extends cdk.Stack {
     super(scope, id, props);
 
     /* Parameter Section */
-    const givenBaseImage = this.node.tryGetContext('givenBaseImage') ?? 'ami-0e7b3e7766d24a6ff';
     this.givenKey = ec2.KeyPair.fromKeyPairName(this, 'givenKey', 'ec2_login_key');
     this.ec2EncryptionKey = this.createKMSKey();
     this.ec2InstanceProfile = this.createInstanceProfileRole();
-
-    // If given imageID is invalid, use latest image
-    try {
-      this.givenMachineImage = ec2.MachineImage.genericLinux({
-        [`${this.region}`]: `${givenBaseImage}`,
-      });
-    } catch (error) {
-      this.givenMachineImage = ec2.MachineImage.latestAmazonLinux2()
-    }
+    // const givenBaseImage = this.node.tryGetContext('givenBaseImage') 
+    //   ?? 'ami-0e7b3e7766d24a6ff'; // Amaxon Linux 2 Image Default
+    // this.givenMachineImage = ec2.MachineImage.genericLinux({
+    //   [`${}`]: `${givenBaseImage}`,
+    // });
+    this.givenMachineImage = ec2.MachineImage.latestAmazonLinux2()
 
     // Creating a Cloudwatch config file in SSM
     new ssm.StringParameter(this, 'CloudWatchAgentConfig', {
@@ -90,8 +84,20 @@ export class BasicEC2Stack extends cdk.Stack {
       },
     })
 
-    // EC2 Instance
-    const instance = new ec2.Instance(this, 'Build-Instance', {
+    new ec2.Instance(this, 'Test-Instance-A', {
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+      machineImage: this.givenMachineImage,
+      vpc: props.vpc,
+      keyPair: this.givenKey,
+      vpcSubnets: { subnets: [props.publicSubnet] },
+      securityGroup: props.securityGroup,
+      instanceProfile: this.ec2InstanceProfile,
+      init: cloudInit,
+      initOptions: {
+        timeout: cdk.Duration.minutes(15),
+      },
+    });
+    new ec2.Instance(this, 'Test-Instance-B', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: this.givenMachineImage,
       vpc: props.vpc,

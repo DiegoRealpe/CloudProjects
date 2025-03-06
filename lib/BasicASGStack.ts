@@ -18,22 +18,19 @@ export class BasicASGStack extends cdk.Stack {
 
     const key = ec2.KeyPair.fromKeyPairName(this, 'givenKey', 'ec2_login_key');
 
-    // Create an Application Load Balancer (ALB)
-    const alb = new elbv2.ApplicationLoadBalancer(this, 'MyALB', {
-    
+    const nlb = new elbv2.NetworkLoadBalancer(this, 'BasicNLB', {
       vpc: props.vpc,
-      internetFacing: true, // Public ALB
-      securityGroup: props.securityGroup,
+      internetFacing: true,
     });
-
+    
     // Create a Listener on Port 1000
-    const listener = alb.addListener('Listener', {
+    const listener = nlb.addListener('TCPListener', {
       port: 10008,
-      protocol: elbv2.ApplicationProtocol.HTTP
+      protocol: elbv2.Protocol.TCP
     });
 
     // Create a Launch Template
-    const launchTemplate = new ec2.LaunchTemplate(this, 'MyLaunchTemplate', {
+    const launchTemplate = new ec2.LaunchTemplate(this, 'BasicLaunchTemplate', {
       // Template created manually
       machineImage: ec2.MachineImage.genericLinux({
         [`${this.region}`]: 'ami-0cf098e44ab62d604',
@@ -42,38 +39,31 @@ export class BasicASGStack extends cdk.Stack {
       keyPair: key,
       securityGroup: props.securityGroup,
     });
-    const asg = new autoscaling.AutoScalingGroup(this, 'MyAutoScalingGroup', {
+    const asg = new autoscaling.AutoScalingGroup(this, 'BasicAutoScalingGroup', {
       vpc: props.vpc,
       launchTemplate: launchTemplate,
       minCapacity: 2,
-      desiredCapacity: 2,
+      // desiredCapacity: 2,
       maxCapacity: 3,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
     });
-    // Attach ASG to Load Balancer Target Group
-    const targetGroup = new elbv2.ApplicationTargetGroup(this, 'MyTargetGroup', {
+    const networkTargetGroup = new elbv2.NetworkTargetGroup(this, 'BasicTargetGroup', {
       vpc: props.vpc,
       port: 10008,
-      protocol: elbv2.ApplicationProtocol.HTTP,
-      targets: [asg],
+      protocol: elbv2.Protocol.TCP,
+      targets: [asg], 
       healthCheck: {
-        path: '/',
-        port: '10008',
+        protocol: elbv2.Protocol.TCP, 
+        port: 'traffic-port',
         interval: cdk.Duration.seconds(30),
+        timeout: cdk.Duration.seconds(5),
       },
     });
+    listener.addTargetGroups('AddTargetGroup', networkTargetGroup);
 
-    listener.addTargetGroups('AddTargetGroup', {
-      targetGroups: [targetGroup],
-    });
-  
-    // Attach ASG to the Target Group (Ensures new instances register automatically)
-    // asg.attachToApplicationTargetGroup(targetGroup);
-
-    // Output the ALB Public URL
-    new cdk.CfnOutput(this, 'ALBAddress', {
-      value: `http://${alb.loadBalancerDnsName}`,
-      description: 'The ALB public DNS',
+    new cdk.CfnOutput(this, 'NLBAddress', {
+      value: `http://${nlb.loadBalancerDnsName}`,
+      description: 'NLB public DNS',
     });
 
     // Output the Auto Scaling Group Name

@@ -16,13 +16,16 @@ export class BasicVPCStack extends cdk.Stack {
     super(scope, id, props);
 
     /* S3 Section */
-    const givenBucketName = this.node.tryGetContext('givenBucketName');
+    const givenBucketName = (this.node.tryGetContext('givenBucketName') as string) + '-' + props?.env?.region;
     const shouldCreateBucket = this.node.tryGetContext('shouldCreateBucket') ?? true;
 
     if (shouldCreateBucket) {
-      this.bucket = new s3.Bucket(this, 'gpbucket-cpre599', {
+      this.bucket = new s3.Bucket(this, givenBucketName, {
         versioned: false,
         bucketName: givenBucketName,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
         encryption: cdk.aws_s3.BucketEncryption.S3_MANAGED,
       });
       this.bucket.addToResourcePolicy(
@@ -40,7 +43,7 @@ export class BasicVPCStack extends cdk.Stack {
         throw new Error('No Bucket Name Given');
       }
       console.log('Bucket exists');
-      this.bucket = s3.Bucket.fromBucketName(this, 'amibucket-cpre599', givenBucketName.bucketName) as s3.Bucket;
+      this.bucket = s3.Bucket.fromBucketName(this, 'gpbucket-cpre599', givenBucketName) as s3.Bucket;
     }
 
     // this.bucketDeploy = new s3Deploy.BucketDeployment(this, 'DeployWebsite', {
@@ -54,8 +57,14 @@ export class BasicVPCStack extends cdk.Stack {
     // });
 
     /* EC2 Section */
-    const cidrBasicVPC = '11.0.0.0/16';
-    this.vpc = new ec2.Vpc(this, 'BasicVPC', {
+    let cidrBasicVPC: string 
+    if(props?.env?.region == 'us-east-1'){
+      cidrBasicVPC = '13.0.0.0/16';
+    }else {
+      cidrBasicVPC = '12.0.0.0/16';
+    }
+    
+    this.vpc = new ec2.Vpc(this, `BasicVPC-${props?.env?.region}`, {
       ipAddresses: ec2.IpAddresses.cidr(cidrBasicVPC),
       maxAzs: 2, // Only 1 AZ
       createInternetGateway: true,
