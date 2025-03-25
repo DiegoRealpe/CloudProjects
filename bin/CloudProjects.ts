@@ -50,8 +50,4 @@ new BasicASGStack(app, 'BasicASGStack', {
 new BasicLambdaStack(app, 'BasicLambdaStack', {
   env,
   stackName: 'BasicLambdaStack',
-  // securityGroup: vpcStack.givenSecurityGroup,
-  // vpc: vpcStack.vpc,
-  // publicSubnet: vpcStack.publicSubnet,
-  // bucket: vpcStack.bucket,
 });

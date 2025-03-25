@@ -29,16 +29,6 @@ export class BasicLambdaStack extends cdk.Stack {
       functionUrlAuthType: lambda.FunctionUrlAuthType.NONE,
     })
 
-    // API Gateway to expose Lambda function as an HTTP endpoint
-    // const api = new apigateway.LambdaRestApi(this, 'EC2PublicIPApi', {
-    //   handler: ec2PublicIPLambda,
-    //   proxy: false,
-    // });
-
-    // // Define /public-ips endpoint
-    // const ec2PublicIPs = api.root.addResource('public-ips');
-    // ec2PublicIPs.addMethod('POST'); // Allow only POST requests
-
     // Output API URL
     new cdk.CfnOutput(this, 'Lambda URL', {
       value: lambdaURL.url,
