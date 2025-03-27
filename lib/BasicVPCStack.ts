@@ -6,23 +6,25 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import path = require('path');
 
+export interface VPCStackProps extends cdk.StackProps {
+  givenBucketName?: string;
+}
+
 export class BasicVPCStack extends cdk.Stack {
   public givenSecurityGroup: ec2.ISecurityGroup;
-  public vpc: ec2.IVpc;
+  public vpc: ec2.Vpc;
   public publicSubnet: ec2.ISubnet;
+  public privateSubnet: ec2.ISubnet;
   public bucket: s3.IBucket;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: VPCStackProps) {
     super(scope, id, props);
 
     /* S3 Section */
-    const givenBucketName = (this.node.tryGetContext('givenBucketName') as string) + '-' + props?.env?.region;
-    const shouldCreateBucket = this.node.tryGetContext('shouldCreateBucket') ?? true;
-
-    if (shouldCreateBucket) {
-      this.bucket = new s3.Bucket(this, givenBucketName, {
+    if (props.givenBucketName) {
+      this.bucket = new s3.Bucket(this, props.givenBucketName, {
         versioned: false,
-        bucketName: givenBucketName,
+        bucketName: props.givenBucketName,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
         autoDeleteObjects: true,
         blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS,
@@ -38,13 +40,14 @@ export class BasicVPCStack extends cdk.Stack {
           ],
         }),
       );
-    } else {
-      if (!givenBucketName) {
-        throw new Error('No Bucket Name Given');
-      }
-      console.log('Bucket exists');
-      this.bucket = s3.Bucket.fromBucketName(this, 'gpbucket-cpre599', givenBucketName) as s3.Bucket;
-    }
+    } 
+    // else {
+    //   if (!props.givenBucketName) {
+    //     throw new Error('No Bucket Name Given');
+    //   }
+    //   console.log('Bucket exists');
+    //   this.bucket = s3.Bucket.fromBucketName(this, 'importedBucket', props.givenBucketName) as s3.Bucket;
+    // }
 
     // this.bucketDeploy = new s3Deploy.BucketDeployment(this, 'DeployWebsite', {
     // 	sources: [
@@ -73,11 +76,15 @@ export class BasicVPCStack extends cdk.Stack {
         subnetType: ec2.SubnetType.PUBLIC, // Defines it as a public subnet
         cidrMask: 24,
         mapPublicIpOnLaunch: true
+      },{
+        name: 'BasicPrivSubnet',
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, // Defines it as a private subnet
+        cidrMask: 24
       }],
     });
 
     // Get Security Group from passed ID or use create one if not found
-    this.givenSecurityGroup = new ec2.SecurityGroup(this, 'javaServerSecGroup', {
+    this.givenSecurityGroup = new ec2.SecurityGroup(this, `javaServerSecGroup-${props?.env?.region}`, {
       description: 'SSH, SSM Security Group',
       vpc: this.vpc,
       allowAllOutbound: true,
@@ -86,8 +93,9 @@ export class BasicVPCStack extends cdk.Stack {
     this.givenSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443));
     this.givenSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(10008));
     
-    // Export public subnet
+    // Export subnets
     this.publicSubnet = this.vpc.publicSubnets[0];
+    this.privateSubnet = this.vpc.privateSubnets[0];
   }
 
 }
