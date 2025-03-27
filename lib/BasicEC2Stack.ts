@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import * as fs from 'fs';
+import { getFileString } from './utils';
 import path = require('path');
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -13,6 +13,7 @@ export interface EC2StackProps extends cdk.StackProps {
   securityGroup: ec2.ISecurityGroup;
   vpc: ec2.IVpc;
   publicSubnet: ec2.ISubnet;
+  privateSubnet: ec2.ISubnet;
   bucket: s3.IBucket;
 }
 
@@ -40,7 +41,7 @@ export class BasicEC2Stack extends cdk.Stack {
     // Creating a Cloudwatch config file in SSM
     new ssm.StringParameter(this, 'CloudWatchAgentConfig', {
       parameterName: '/AmazonCloudWatch-linux',
-      stringValue: this.getFileString('./assets/cwa-config.json'),
+      stringValue: getFileString('./assets/cwa-config.json'),
       description: 'CloudWatch Agent Configuration for EC2 instances',
       tier: ssm.ParameterTier.STANDARD
     });
@@ -84,7 +85,7 @@ export class BasicEC2Stack extends cdk.Stack {
       },
     })
 
-    new ec2.Instance(this, 'Test-Instance-A', {
+    new ec2.Instance(this, 'Test--PublicInstance-A', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: this.givenMachineImage,
       vpc: props.vpc,
@@ -97,12 +98,12 @@ export class BasicEC2Stack extends cdk.Stack {
         timeout: cdk.Duration.minutes(15),
       },
     });
-    new ec2.Instance(this, 'Test-Instance-B', {
+    new ec2.Instance(this, 'Test-PrivateInstance-B', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: this.givenMachineImage,
       vpc: props.vpc,
       keyPair: this.givenKey,
-      vpcSubnets: { subnets: [props.publicSubnet] },
+      vpcSubnets: { subnets: [props.privateSubnet] },
       securityGroup: props.securityGroup,
       instanceProfile: this.ec2InstanceProfile,
       init: cloudInit,
@@ -115,7 +116,6 @@ export class BasicEC2Stack extends cdk.Stack {
   private createInstanceProfileRole(): iam.InstanceProfile {
     const givenBucketName = this.node.tryGetContext('givenBucketName');
     this.ec2ServiceRole = new iam.Role(this, 'default-java-ec2-role', {
-      roleName: 'default-java-ec2-role',
       description: 'Service role to run an EC2 simple java server',
       assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: [
@@ -146,15 +146,8 @@ export class BasicEC2Stack extends cdk.Stack {
         }),
       },
     });
-    // this.ec2ServiceRole.assumeRolePolicy?.addStatements(
-    //   new iam.PolicyStatement({
-    //     principals: [new iam.ServicePrincipal('ec2.amazonaws.com')],
-    //     actions: ['sts:AssumeRole'],
-    //   }),
-    // );
 
     return new iam.InstanceProfile(this, 'default-java-ec2-ip', {
-      instanceProfileName: 'default-java-ec2-ip',
       role: this.ec2ServiceRole,
     });
   }
@@ -186,15 +179,5 @@ export class BasicEC2Stack extends cdk.Stack {
         ],
       }),
     });
-  }
-
-  private getFileString(filePath: string): string {
-    try {
-      const content = fs.readFileSync(filePath, 'utf-8');
-      return content;
-    } catch (error) {
-      console.error(`Error reading file "${filePath}":`, error);
-      return '';
-    }
   }
 }
