@@ -16,7 +16,7 @@ const env = {
 };
 
 // Each VPC Stack creates a GP bucket with a provided name or imports one
-// Uses VPC high-level construct which sets up RTs, IGW for public and NAT for 
+// Uses VPC high-level construct which sets up RTs, IGW for public and NAT for private
 const vpcStack1 = new BasicVPCStack(app, 'BasicVPCStack-useast2', { 
   env,
   stackName: 'BasicVPCStack-useast2', 
@@ -62,15 +62,26 @@ const peeringStack = new VpcPeeringStack(app, 'PeeringStack', {
   regionB: `${vpcStack2.region}`,
 })
 
-new VpcPeeringRoutesStack(app, 'RoutesStack', {
+const routeStackAtoB = new VpcPeeringRoutesStack(app, 'RouteStackAtoB', {
   env,
   crossRegionReferences: true,
   peeringConnectionId: `${peeringStack.peeringConnectionId}`,
-  vpcCidrA: `${vpcStack1.vpc.vpcCidrBlock}`,
-  routeTableIdA: `${vpcStack1.vpc.privateSubnets[0].routeTable.routeTableId}`,
-  vpcCidrB: `${vpcStack2.vpc.vpcCidrBlock}`,
-  routeTableIdB: `${vpcStack2.vpc.privateSubnets[0].routeTable.routeTableId}`,
-})
+  sourceVpcCidr: `${vpcStack1.vpc.vpcCidrBlock}`,
+  destinationVpcCidr: `${vpcStack2.vpc.vpcCidrBlock}`,
+  sourceRouteTableId: `${vpcStack1.vpc.privateSubnets[0].routeTable.routeTableId}`,
+});
+
+const routeStackBtoA = new VpcPeeringRoutesStack(app, 'RouteStackBtoA', {
+  env: { 
+    ...env,
+    region: 'us-east-1'
+  },
+  crossRegionReferences: true,
+  peeringConnectionId: `${peeringStack.peeringConnectionId}`,
+  sourceVpcCidr: `${vpcStack2.vpc.vpcCidrBlock}`,
+  destinationVpcCidr: `${vpcStack1.vpc.vpcCidrBlock}`,
+  sourceRouteTableId: `${vpcStack2.vpc.privateSubnets[0].routeTable.routeTableId}`
+});
 
 // new BasicASGStack(app, 'BasicASGStack', {
 //   env,
