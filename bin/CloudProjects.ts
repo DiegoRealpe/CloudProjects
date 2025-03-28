@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { BasicVPCStack } from '../lib/BasicVPCStack';
 import { BasicEC2Stack } from '../lib/BasicEC2Stack';
+import { BasicIAMStack } from '../lib/BasicIAMStack';
 // import { BasicASGStack } from '../lib/BasicASGStack';
 // import { BasicLambdaStack } from '../lib/BasicLambdaStack';
 
@@ -15,22 +16,36 @@ const env = {
 
 // Each VPC Stack creates a GP bucket with a provided name or imports one
 // Uses VPC high-level construct which sets up RTs, IGW for public and NAT for private
-const vpcStack1 = new BasicVPCStack(app, 'BasicVPCStack', { 
+const vpcStack = new BasicVPCStack(app, 'BasicVPCStack', { 
   env,
   stackName: 'BasicVPCStack', 
-  givenBucketName: 'gpbucket-cpre599',
+});
+
+// Creates a Group, Role and 
+const iamStack = new BasicIAMStack(app, 'BasicIAMStack', { 
+  env,
+  stackName: 'BasicIAMStack', 
+  givenBucketName: 'gpbucket-coms559',
+  groupAName: 'DevGroup',
+  groupBName: 'AdminGroup',
+  userAName: 'DevUser',
+  userBName: 'AdminUser',
+  roleName: 'EC2FullAccessRole',
+  assumeAsPolicyName: 'AssumeEC2RolePolicy',
+  basicAccessPolicyName: '',
 });
 
 // Creates EC2 boxes in different region
 // Creates 1 Private and 1 Public t3.micro
+// Grants EC2 Service Role Access To Bucket
 new BasicEC2Stack(app, 'BasicEC2Stack', {
   env,
   stackName: 'BasicEC2Stack',
-  securityGroup: vpcStack1.givenSecurityGroup,
-  vpc: vpcStack1.vpc,
-  publicSubnet: vpcStack1.publicSubnet,
-  privateSubnet: vpcStack1.privateSubnet,
-  bucket: vpcStack1.bucket
+  securityGroup: vpcStack.givenSecurityGroup,
+  vpc: vpcStack.vpc,
+  publicSubnet: vpcStack.publicSubnet,
+  privateSubnet: vpcStack.privateSubnet,
+  givenBucketName: iamStack.bucket.bucketName,
 });
 
 // new BasicASGStack(app, 'BasicASGStack', {
