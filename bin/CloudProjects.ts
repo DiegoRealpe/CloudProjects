@@ -3,8 +3,6 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { BasicVPCStack } from '../lib/BasicVPCStack';
 import { BasicEC2Stack } from '../lib/BasicEC2Stack';
-import { VpcPeeringStack } from '../lib/VpcPeeringStack';
-import { VpcPeeringRoutesStack } from '../lib/VpcPeeringRoutesStack';
 // import { BasicASGStack } from '../lib/BasicASGStack';
 // import { BasicLambdaStack } from '../lib/BasicLambdaStack';
 
