@@ -23,7 +23,7 @@ export class BasicVPCStack extends cdk.Stack {
       cidrBasicVPC = '12.0.0.0/16';
     }
     
-    this.vpc = new ec2.Vpc(this, `BasicVPC-${props?.env?.region}`, {
+    this.vpc = new ec2.Vpc(this, 'BasicVPC', {
       ipAddresses: ec2.IpAddresses.cidr(cidrBasicVPC),
       maxAzs: 2, // Only 1 AZ
       createInternetGateway: true,
@@ -42,7 +42,7 @@ export class BasicVPCStack extends cdk.Stack {
     });
 
     // Get Security Group from passed ID or use create one if not found
-    this.givenSecurityGroup = new ec2.SecurityGroup(this, `javaServerSecGroup-${props?.env?.region}`, {
+    this.givenSecurityGroup = new ec2.SecurityGroup(this, `javaServerSecGroup`, {
       description: 'SSH, SSM Security Group',
       vpc: this.vpc,
       allowAllOutbound: true,

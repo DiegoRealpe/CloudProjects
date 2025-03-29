@@ -21,18 +21,18 @@ const vpcStack = new BasicVPCStack(app, 'BasicVPCStack', {
   stackName: 'BasicVPCStack', 
 });
 
-// Creates a Group, Role and 
+// Creates Group, Role, User, Policy and Bucket resources
 const iamStack = new BasicIAMStack(app, 'BasicIAMStack', { 
   env,
   stackName: 'BasicIAMStack', 
   givenBucketName: 'gpbucket-coms559',
-  groupAName: 'DevGroup',
-  groupBName: 'AdminGroup',
-  userAName: 'DevUser',
-  userBName: 'AdminUser',
-  roleName: 'EC2FullAccessRole',
-  assumeAsPolicyName: 'AssumeEC2RolePolicy',
-  basicAccessPolicyName: '',
+  groupAName: 'AdminGroup',
+  groupBName: 'DevGroup',
+  userAName: 'AdminUser',
+  userBName: 'DevUser',
+  roleName: 'FullAccessRole',
+  assumeAsPolicyName: 'assumeEC2RolePolicy',
+  basicAccessPolicyName: 'basicAccessPolicy',
 });
 
 // Creates EC2 boxes in different region
